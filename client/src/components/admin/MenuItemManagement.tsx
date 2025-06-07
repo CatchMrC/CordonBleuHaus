@@ -19,7 +19,8 @@ import {
   Select,
   MenuItem as MuiMenuItem, // Renamed to avoid conflict with our MenuItem interface
   InputLabel,
-  FormControl
+  FormControl,
+  Input
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -33,8 +34,9 @@ const MenuItemManagement: React.FC = () => {
   const [newItemName, setNewItemName] = useState('');
   const [newItemDescription, setNewItemDescription] = useState('');
   const [newItemPrice, setNewItemPrice] = useState<number>(0);
-  const [newItemImage, setNewItemImage] = useState('');
-  const [newCategory, setNewCategory] = useState<string>(''); // Store category _id
+  const [newItemImage, setNewItemImage] = useState(''); 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); 
+  const [newCategory, setNewCategory] = useState<string>(''); 
 
   const fetchMenuItems = async () => {
     try {
@@ -67,6 +69,7 @@ const MenuItemManagement: React.FC = () => {
     setNewItemDescription(item ? item.description : '');
     setNewItemPrice(item ? item.price : 0);
     setNewItemImage(item ? item.image || '' : '');
+    setSelectedFile(null); 
     setNewCategory(item ? item.category._id : '');
     setOpenDialog(true);
   };
@@ -78,7 +81,18 @@ const MenuItemManagement: React.FC = () => {
     setNewItemDescription('');
     setNewItemPrice(0);
     setNewItemImage('');
+    setSelectedFile(null); 
     setNewCategory('');
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+      setNewItemImage(URL.createObjectURL(event.target.files[0])); // For instant preview, temporary URL
+    } else {
+      setSelectedFile(null);
+      // Don't clear newItemImage here if user might manually type URL
+    }
   };
 
   const handleSubmit = async () => {
@@ -86,6 +100,36 @@ const MenuItemManagement: React.FC = () => {
     if (!token) {
       console.error('No token found. Please log in.');
       return;
+    }
+
+    let imageUrlToSave = newItemImage; // Default to existing URL or manual input
+
+    if (selectedFile) {
+      // If a new file is selected, upload it first
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      try {
+        const uploadResponse = await fetch('http://localhost:5000/api/upload/image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (uploadResponse.ok) {
+          imageUrlToSave = `http://localhost:5000${uploadData.filePath}`; // Use the uploaded file's path
+        } else {
+          console.error('Image upload failed:', uploadData.message || 'Unknown error');
+          return;
+        }
+      } catch (uploadError) {
+        console.error('Error during image upload:', uploadError);
+        return;
+      }
     }
 
     const method = currentMenuItem ? 'PUT' : 'POST';
@@ -104,7 +148,7 @@ const MenuItemManagement: React.FC = () => {
           name: newItemName,
           description: newItemDescription,
           price: newItemPrice,
-          image: newItemImage,
+          image: imageUrlToSave, // Use the uploaded image URL or existing one
           category: newCategory,
         }),
       });
@@ -221,13 +265,31 @@ const MenuItemManagement: React.FC = () => {
           />
           <TextField
             margin="dense"
-            label="Image URL"
+            label="Image URL (Optional)"
             type="text"
             fullWidth
             variant="standard"
             value={newItemImage}
-            onChange={(e) => setNewItemImage(e.target.value)}
+            onChange={(e) => {
+              setNewItemImage(e.target.value);
+              setSelectedFile(null); // Clear selected file if user types a URL
+            }}
+            sx={{ mt: 2 }} // Add some margin for spacing
           />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+            OR upload an image file:
+          </Typography>
+          <Input
+            type="file"
+            fullWidth
+            sx={{ mb: 2 }} // Add some margin for spacing
+            onChange={handleFileChange}
+          />
+          {newItemImage && (
+            <Box sx={{ textAlign: 'center', mt: 1, mb: 2 }}>
+              <img src={newItemImage} alt="Item Preview" style={{ maxWidth: '100%', maxHeight: 150, objectFit: 'contain' }} />
+            </Box>
+          )}
           <FormControl fullWidth margin="dense" variant="standard">
             <InputLabel>Category</InputLabel>
             <Select

@@ -1,0 +1,26 @@
+name,description,price,image,category
+Grüner Salat,"Frisch zubereitet mit knackigem Gemüse und feinem Dressing.",6.50,image.jpg,Salate
+Gemischter Salat,"Frisch zubereitet mit knackigem Gemüse und feinem Dressing.",7.50,image.jpg,Salate
+"Tomate-Mozzarella mit Basilikum","Saftige Tomaten kombiniert mit cremigem Mozzarella und frischem Basilikum.",9.50,image.jpg,Salate
+Nüsslisalat mit Ei,"Leckeres Gericht aus besten Zutaten, liebevoll zubereitet.",10.50,image.jpg,Salate
+"Nüsslisalat mit Croutons, Speck, Ei & Pinienkernen","Leckeres Gericht aus besten Zutaten, liebevoll zubereitet.",12.50,image.jpg,Salate
+"Rucola mit Parmesan, Pinienkernen & Balsamico","Leckeres Gericht aus besten Zutaten, liebevoll zubereitet.",13.50,image.jpg,Salate
+"Wurst-Käse-Salat garniert","Leckeres Gericht aus besten Zutaten, liebevoll zubereitet.",14.50,image.jpg,Salate
+"Wurstsalat mit Pommes Frites","Leckeres Gericht aus besten Zutaten, liebevoll zubereitet.",17.50,image.jpg,Salate
+"Cordon Bleu Klassik (Schwein)","Traditionell mit Schinken und Käse gefüllt, außen goldbraun paniert.",21.50,image.jpg,Cordon Bleu
+"Cordon Bleu 'Winzer' (Schwein)","Herzhaft gefüllt mit Speck, Zwiebeln und einem Hauch Knoblauch.",22.50,image.jpg,Cordon Bleu
+"Cordon Bleu 'Speck' (Schwein)","Deftig mit Speck, Champignons und Zwiebeln – ein Genuss.",23.50,image.jpg,Cordon Bleu
+"Cordon Bleu 'Popeye' (Schwein)","Gesund gefüllt mit Spinat, Brokkoli und Pinienkernen.",24.50,image.jpg,Cordon Bleu
+"Cordon Bleu 'Exotik' (Schwein)","Fruchtig-würzig mit exotischen Früchten und Currynote.",24.50,image.jpg,Cordon Bleu
+"Cordon Bleu 'Zigeuner' (Schwein)","Würzige Füllung mit Speck, Salami und Schinken – herzhaft lecker.",24.50,image.jpg,Cordon Bleu
+"Poulet Cordon Bleu (Halal)","Zartes Poulet mit klassischer Cordon Bleu-Füllung – halal zubereitet.",19.50,image.jpg,Cordon Bleu
+"Kalbs Cordon Bleu (Halal)","Edles Kalbfleisch mit feinster Käse-Schinken-Füllung – halal.",27.50,image.jpg,Cordon Bleu
+"Poulet Cordon Bleu Menü","Inkl. Beilage, Softdrink & kleiner Salat",22.50,image.jpg,Menüs
+"Schwein Cordon Bleu Menü","Inkl. Beilage, Softdrink & kleiner Salat",25.50,image.jpg,Menüs
+"Kalbs Cordon Bleu Menü","Inkl. Beilage, Softdrink & kleiner Salat",28.50,image.jpg,Menüs
+"Pouletschnitzel paniert Menü","Knusprig paniertes Schnitzel – zart und saftig im Biss.",18.50,image.jpg,Menüs
+"Schweineschnitzel paniert Menü","Knusprig paniertes Schnitzel – zart und saftig im Biss.",21.50,image.jpg,Menüs
+"Kalbsschnitzel paniert Menü","Knusprig paniertes Schnitzel – zart und saftig im Biss.",24.50,image.jpg,Menüs
+"Curry Wurst Menü","Würzige Wurst mit herzhafter Currysauce – ein Klassiker neu interpretiert.",12.50,image.jpg,Menüs
+Tiramisu Klassik,"Das klassische italienische Dessert – cremig, süß und unwiderstehlich.",8.50,image.jpg,Desserts
+Tiramisu Dubai Art,"Orientalischer Twist mit Datteln und Pistazien – ein Traum von 1001 Nacht.",11.50,image.jpg,Desserts

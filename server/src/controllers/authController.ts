@@ -5,10 +5,6 @@ import User, { IUser } from '../models/User';
 const JWT_SECRET: Secret = process.env.JWT_SECRET || 'your_jwt_secret'; // Use a strong, random secret in production
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '1h';
 
-interface AuthRequest extends Request {
-  user?: IUser; // Optional: To store authenticated user data if needed later
-}
-
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { username, password, role } = req.body;
