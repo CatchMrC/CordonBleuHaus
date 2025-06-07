@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import categoryRoutes from './routes/categoryRoutes';
 import menuItemRoutes from './routes/menuItemRoutes';
+import authRoutes from './routes/authRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -32,4 +33,5 @@ app.listen(PORT, () => {
 });
 
 app.use('/api/categories', categoryRoutes);
-app.use('/api/menu-items', menuItemRoutes); 
+app.use('/api/menu-items', menuItemRoutes);
+app.use('/api/auth', authRoutes); 

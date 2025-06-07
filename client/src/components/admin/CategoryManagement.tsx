@@ -57,6 +57,12 @@ const CategoryManagement: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found. Please log in.');
+      return;
+    }
+
     const method = currentCategory ? 'PUT' : 'POST';
     const url = currentCategory 
       ? `http://localhost:5000/api/categories/${currentCategory._id}` 
@@ -67,6 +73,7 @@ const CategoryManagement: React.FC = () => {
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: newCategoryName,
@@ -86,9 +93,18 @@ const CategoryManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found. Please log in.');
+      return;
+    }
+
     try {
       const response = await fetch(`http://localhost:5000/api/categories/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {

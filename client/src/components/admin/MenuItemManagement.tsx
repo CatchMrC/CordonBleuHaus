@@ -82,6 +82,12 @@ const MenuItemManagement: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found. Please log in.');
+      return;
+    }
+
     const method = currentMenuItem ? 'PUT' : 'POST';
     const url = currentMenuItem 
       ? `http://localhost:5000/api/menu-items/${currentMenuItem._id}` 
@@ -92,6 +98,7 @@ const MenuItemManagement: React.FC = () => {
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: newItemName,
@@ -114,9 +121,18 @@ const MenuItemManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No token found. Please log in.');
+      return;
+    }
+
     try {
       const response = await fetch(`http://localhost:5000/api/menu-items/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {

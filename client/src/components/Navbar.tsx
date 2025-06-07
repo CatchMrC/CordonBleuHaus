@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   AppBar, 
   Toolbar, 
@@ -24,6 +25,8 @@ const drawerWidth = 240;
 
 const Navbar: React.FC<Props> = (props) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
+  const isAuthenticated = localStorage.getItem('token');
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -35,6 +38,12 @@ const Navbar: React.FC<Props> = (props) => {
       element.scrollIntoView({ behavior: 'smooth' });
       setMobileOpen(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    navigate('/login');
   };
 
   const trigger = useScrollTrigger({
@@ -63,6 +72,11 @@ const Navbar: React.FC<Props> = (props) => {
         <ListItem onClick={() => scrollToSection('contact')}>
           <ListItemText primary="Contact" />
         </ListItem>
+        {isAuthenticated && (
+          <ListItem onClick={handleLogout}>
+            <ListItemText primary="Logout" />
+          </ListItem>
+        )}
       </List>
     </Box>
   );
@@ -97,6 +111,11 @@ const Navbar: React.FC<Props> = (props) => {
               <Button color="inherit" onClick={() => scrollToSection('contact')}>
                 Contact
               </Button>
+              {isAuthenticated && (
+                <Button color="inherit" onClick={handleLogout}>
+                  Logout
+                </Button>
+              )}
             </Box>
 
             <IconButton

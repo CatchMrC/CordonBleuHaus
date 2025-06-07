@@ -8,7 +8,7 @@ export interface IUser extends Document {
   comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
 
-const UserSchema: Schema = new Schema({
+const UserSchema: Schema<IUser> = new Schema<IUser>({
   username: {
     type: String,
     required: true,
@@ -38,8 +38,8 @@ UserSchema.pre('save', async function (next) {
 });
 
 // Method to compare password
-UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
+UserSchema.methods.comparePassword = async function (this: IUser, candidatePassword: string): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password!);
 };
 
 export default mongoose.model<IUser>('User', UserSchema); 

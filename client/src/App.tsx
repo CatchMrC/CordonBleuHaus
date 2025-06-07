@@ -13,6 +13,8 @@ import Gallery from './components/Gallery';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import AdminDashboard from './pages/AdminDashboard';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 const App: React.FC = () => {
   return (
@@ -37,7 +39,15 @@ const App: React.FC = () => {
                 <Footer />
               </>
             } />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<LoginPage />} />
           </Routes>
         </Router>
       </ThemeProvider>
