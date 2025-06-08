@@ -20,10 +20,26 @@ import {
   MenuItem as MuiMenuItem, // Renamed to avoid conflict with our MenuItem interface
   InputLabel,
   FormControl,
-  Input
+  Input,
+  Stack,
+  Slider,
+  InputAdornment,
+  Alert,
+  Snackbar,
+  Chip,
+  ToggleButton,
+  ToggleButtonGroup,
+  FormControlLabel,
+  Switch,
+  Collapse,
+  Divider
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { MenuItem, Category } from '../../data/menuData';
 
 const MenuItemManagement: React.FC = () => {
@@ -36,12 +52,47 @@ const MenuItemManagement: React.FC = () => {
   const [newItemPrice, setNewItemPrice] = useState<number>(0);
   const [newItemImage, setNewItemImage] = useState(''); 
   const [selectedFile, setSelectedFile] = useState<File | null>(null); 
-  const [newCategory, setNewCategory] = useState<string>(''); 
+  const [newCategory, setNewCategory] = useState<string>('');
+  const [newItemActive, setNewItemActive] = useState<boolean>(true);
+  // Add new state for search and filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Advanced filter states
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
+  const [searchMode, setSearchMode] = useState<'partial' | 'exact'>('partial');
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [priceFilterType, setPriceFilterType] = useState<'range' | 'preset'>('range');
+  const [pricePreset, setPricePreset] = useState<string>('');
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+  const [statusFilters, setStatusFilters] = useState({
+    active: true,
+    featured: false,
+    seasonal: false,
+    specialOffer: false
+  });
+
+  // Price presets
+  const pricePresets = [
+    { label: 'Under $10', value: 'under10', range: [0, 10] },
+    { label: '$10-$20', value: '10to20', range: [10, 20] },
+    { label: '$20-$30', value: '20to30', range: [20, 30] },
+    { label: 'Over $30', value: 'over30', range: [30, 100] }
+  ];
 
   const fetchMenuItems = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/menu-items');
       const data: MenuItem[] = await response.json();
+      console.log('Fetched menu items:', data.map(item => ({
+        name: item.name,
+        category: item.category ? { _id: item.category._id, name: item.category.name } : null // Simplify category log
+      })));
       setMenuItems(data);
     } catch (error) {
       console.error('Error fetching menu items:', error);
@@ -52,6 +103,10 @@ const MenuItemManagement: React.FC = () => {
     try {
       const response = await fetch('http://localhost:5000/api/categories');
       const data: Category[] = await response.json();
+      console.log('Fetched categories:', data.map(cat => ({
+        _id: cat._id,
+        name: cat.name
+      })));
       setCategories(data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -63,6 +118,11 @@ const MenuItemManagement: React.FC = () => {
     fetchCategories();
   }, []);
 
+  // Add effect to log selected categories changes
+  useEffect(() => {
+    console.log('Selected categories changed:', selectedCategories);
+  }, [selectedCategories]);
+
   const handleOpenDialog = (item?: MenuItem) => {
     setCurrentMenuItem(item || null);
     setNewItemName(item ? item.name : '');
@@ -71,6 +131,7 @@ const MenuItemManagement: React.FC = () => {
     setNewItemImage(item ? item.image || '' : '');
     setSelectedFile(null); 
     setNewCategory(item ? item.category._id : '');
+    setNewItemActive(item ? item.active : true);
     setOpenDialog(true);
   };
 
@@ -83,6 +144,7 @@ const MenuItemManagement: React.FC = () => {
     setNewItemImage('');
     setSelectedFile(null); 
     setNewCategory('');
+    setNewItemActive(true);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,17 +157,73 @@ const MenuItemManagement: React.FC = () => {
     }
   };
 
+  // Enhanced filter function
+  const filteredMenuItems = menuItems.filter(item => {
+    // Debug logging
+    console.log('Filtering item:', {
+      name: item.name,
+      category: item.category,
+      selectedCategories: selectedCategories
+    });
+
+    // Search filter
+    const searchText = caseSensitive ? searchQuery : searchQuery.toLowerCase();
+    const itemName = caseSensitive ? item.name : item.name.toLowerCase();
+    const itemDesc = caseSensitive ? item.description : item.description.toLowerCase();
+    
+    const searchMatch = searchMode === 'exact' 
+      ? itemName === searchText || itemDesc === searchText
+      : itemName.includes(searchText) || itemDesc.includes(searchText);
+
+    // Category filter - show all items if no categories selected
+    const categoryMatch = selectedCategories.length === 0 || 
+      (item.category && selectedCategories.includes(item.category._id as string)); // Explicit cast to string
+
+    // Debug logging for category match
+    console.log('Category match result:', {
+      itemName: item.name,
+      categoryId: item.category?._id,
+      selectedCategories,
+      categoryMatch
+    });
+
+    // Price filter
+    let priceMatch = true;
+    if (priceFilterType === 'preset' && pricePreset) {
+      const preset = pricePresets.find(p => p.value === pricePreset);
+      if (preset) {
+        priceMatch = item.price >= preset.range[0] && item.price <= preset.range[1];
+      }
+    } else {
+      priceMatch = item.price >= priceRange[0] && item.price <= priceRange[1];
+    }
+
+    // Status filters - using AND logic
+    const statusMatch = 
+      (!statusFilters.active || item.active) &&
+      (!statusFilters.featured || item.featured) &&
+      (!statusFilters.seasonal || item.seasonal) &&
+      (!statusFilters.specialOffer || item.specialOffer);
+
+    return searchMatch && categoryMatch && priceMatch && statusMatch;
+  });
+
+  // Handle price range change
+  const handlePriceRangeChange = (event: Event, newValue: number | number[]) => {
+    setPriceRange(newValue as [number, number]);
+  };
+
   const handleSubmit = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token found. Please log in.');
+      setErrorMessage('No token found. Please log in.');
+      setShowError(true);
       return;
     }
 
-    let imageUrlToSave = newItemImage; // Default to existing URL or manual input
+    let imageUrlToSave = newItemImage;
 
     if (selectedFile) {
-      // If a new file is selected, upload it first
       const formData = new FormData();
       formData.append('image', selectedFile);
 
@@ -121,13 +239,15 @@ const MenuItemManagement: React.FC = () => {
         const uploadData = await uploadResponse.json();
 
         if (uploadResponse.ok) {
-          imageUrlToSave = `http://localhost:5000${uploadData.filePath}`; // Use the uploaded file's path
+          imageUrlToSave = `http://localhost:5000${uploadData.filePath}`;
         } else {
-          console.error('Image upload failed:', uploadData.message || 'Unknown error');
+          setErrorMessage('Image upload failed: ' + (uploadData.message || 'Unknown error'));
+          setShowError(true);
           return;
         }
       } catch (uploadError) {
-        console.error('Error during image upload:', uploadError);
+        setErrorMessage('Error during image upload');
+        setShowError(true);
         return;
       }
     }
@@ -148,26 +268,31 @@ const MenuItemManagement: React.FC = () => {
           name: newItemName,
           description: newItemDescription,
           price: newItemPrice,
-          image: imageUrlToSave, // Use the uploaded image URL or existing one
+          image: imageUrlToSave,
           category: newCategory,
+          active: newItemActive
         }),
       });
 
       if (response.ok) {
         fetchMenuItems();
         handleCloseDialog();
+        setShowSuccess(true);
       } else {
-        console.error('Failed to save menu item');
+        setErrorMessage('Failed to save menu item');
+        setShowError(true);
       }
     } catch (error) {
-      console.error('Error saving menu item:', error);
+      setErrorMessage('Error saving menu item');
+      setShowError(true);
     }
   };
 
   const handleDelete = async (id: string) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token found. Please log in.');
+      setErrorMessage('No token found. Please log in.');
+      setShowError(true);
       return;
     }
 
@@ -181,17 +306,260 @@ const MenuItemManagement: React.FC = () => {
 
       if (response.ok) {
         fetchMenuItems();
+        setShowSuccess(true);
       } else {
-        console.error('Failed to delete menu item');
+        setErrorMessage('Failed to delete menu item');
+        setShowError(true);
       }
     } catch (error) {
-      console.error('Error deleting menu item:', error);
+      setErrorMessage('Error deleting menu item');
+      setShowError(true);
+    }
+  };
+
+  const handleToggleActive = async (item: MenuItem) => {
+    console.log('handleToggleActive: Initiating toggle for item:', item.name, 'Current active status:', item.active);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setErrorMessage('No token found. Please log in.');
+      setShowError(true);
+      return;
+    }
+
+    try {
+      const newActiveStatus = !item.active;
+      console.log('handleToggleActive: Calculated new active status:', newActiveStatus);
+      const response = await fetch(`http://localhost:5000/api/menu-items/${item._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ active: newActiveStatus }), // Toggle active status
+      });
+
+      const responseData = await response.json(); // Get response data for more details
+
+      if (response.ok) {
+        console.log('handleToggleActive: API call successful. Response data:', responseData);
+        fetchMenuItems(); // Re-fetch all items to update the table
+        setShowSuccess(true);
+      } else {
+        console.error('handleToggleActive: API call failed. Status:', response.status, 'Response:', responseData);
+        setErrorMessage('Failed to toggle active status: ' + (responseData.message || 'Unknown error'));
+        setShowError(true);
+      }
+    } catch (error) {
+      console.error('handleToggleActive: Error during API call:', error);
+      setErrorMessage('Error toggling active status.');
+      setShowError(true);
     }
   };
 
   return (
     <Box sx={{ mt: 4 }}>
       <Typography variant="h5" gutterBottom>Manage Menu Items</Typography>
+      
+      {/* Search and Filter Section */}
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6">Manage Menu Items</Typography>
+        <Button
+          variant="outlined"
+          startIcon={showAdvancedFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+        >
+          Advanced Filters
+        </Button>
+      </Box>
+
+      {/* Advanced Filters */}
+      <Collapse in={showAdvancedFilters}>
+        <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+          <Typography variant="h6" gutterBottom>Advanced Filters</Typography>
+          
+          {/* Search Options */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>Search Options</Typography>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+              <TextField
+                fullWidth
+                label="Search"
+                variant="outlined"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Stack>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <ToggleButtonGroup
+                value={searchMode}
+                exclusive
+                onChange={(e, value) => value && setSearchMode(value)}
+                size="small"
+              >
+                <ToggleButton value="partial">Partial Match</ToggleButton>
+                <ToggleButton value="exact">Exact Match</ToggleButton>
+              </ToggleButtonGroup>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={caseSensitive}
+                    onChange={(e) => setCaseSensitive(e.target.checked)}
+                  />
+                }
+                label="Case Sensitive"
+              />
+            </Stack>
+          </Box>
+
+          {/* Category Selection */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>Categories</Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {categories.map((category) => (
+                <Chip
+                  key={category._id}
+                  label={category.name}
+                  onClick={() => {
+                    console.log('*** CLICK DETECTED ON CATEGORY CHIP ***', category.name, category._id);
+                    console.log('Category chip clicked. Category ID:', category._id);
+                    setSelectedCategories(prev => {
+                      const newSelection = prev.includes(category._id)
+                        ? prev.filter(id => id !== category._id)
+                        : [...prev, category._id];
+                      console.log('setSelectedCategories resulted in:', newSelection);
+                      return newSelection;
+                    });
+                  }}
+                  color={selectedCategories.includes(category._id) ? "primary" : "default"}
+                  sx={{ m: 0.5 }}
+                />
+              ))}
+              {selectedCategories.length > 0 && (
+                <Chip
+                  label="Clear All"
+                  onClick={() => {
+                    console.log('Clear All clicked.');
+                    setSelectedCategories([]);
+                  }}
+                  color="secondary"
+                  variant="outlined"
+                  sx={{ m: 0.5 }}
+                />
+              )}
+            </Stack>
+            {selectedCategories.length > 0 && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Selected categories: {selectedCategories.length}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Price Filter */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>Price Range</Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <ToggleButtonGroup
+                value={priceFilterType}
+                exclusive
+                onChange={(e, value) => value && setPriceFilterType(value)}
+                size="small"
+              >
+                <ToggleButton value="range">Custom Range</ToggleButton>
+                <ToggleButton value="preset">Presets</ToggleButton>
+              </ToggleButtonGroup>
+            </Stack>
+
+            {priceFilterType === 'range' ? (
+              <Box sx={{ px: 2, mt: 2 }}>
+                <Slider
+                  value={priceRange}
+                  onChange={handlePriceRangeChange}
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={100}
+                  marks={[
+                    { value: 0, label: '$0' },
+                    { value: 25, label: '$25' },
+                    { value: 50, label: '$50' },
+                    { value: 75, label: '$75' },
+                    { value: 100, label: '$100' }
+                  ]}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                  <Typography>${priceRange[0]}</Typography>
+                  <Typography>${priceRange[1]}</Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ mt: 2 }}>
+                <ToggleButtonGroup
+                  value={pricePreset}
+                  exclusive
+                  onChange={(e, value) => setPricePreset(value)}
+                  size="small"
+                >
+                  {pricePresets.map(preset => (
+                    <ToggleButton key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </Box>
+            )}
+          </Box>
+
+          {/* Status Filters */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>Status</Typography>
+            <Stack direction="row" spacing={2}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={statusFilters.active}
+                    onChange={(e) => setStatusFilters(prev => ({ ...prev, active: e.target.checked }))}
+                  />
+                }
+                label="Active"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={statusFilters.featured}
+                    onChange={(e) => setStatusFilters(prev => ({ ...prev, featured: e.target.checked }))}
+                  />
+                }
+                label="Featured"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={statusFilters.seasonal}
+                    onChange={(e) => setStatusFilters(prev => ({ ...prev, seasonal: e.target.checked }))}
+                  />
+                }
+                label="Seasonal"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={statusFilters.specialOffer}
+                    onChange={(e) => setStatusFilters(prev => ({ ...prev, specialOffer: e.target.checked }))}
+                  />
+                }
+                label="Special Offer"
+              />
+            </Stack>
+          </Box>
+        </Box>
+      </Collapse>
+
       <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ mb: 2 }}>
         Add New Menu Item
       </Button>
@@ -205,11 +573,12 @@ const MenuItemManagement: React.FC = () => {
               <TableCell>Price</TableCell>
               <TableCell>Description</TableCell>
               <TableCell>Image</TableCell>
+              <TableCell>Active</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {menuItems.map((item) => (
+            {filteredMenuItems.map((item) => (
               <TableRow key={item._id}>
                 <TableCell>{item.name}</TableCell>
                 <TableCell>{item.category?.name}</TableCell>
@@ -217,6 +586,17 @@ const MenuItemManagement: React.FC = () => {
                 <TableCell>{item.description}</TableCell>
                 <TableCell>
                   {item.image && <img src={item.image} alt={item.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />}
+                </TableCell>
+                <TableCell>
+                  <Switch
+                    checked={item.active}
+                    onChange={(event) => {
+                      console.log('Switch changed for item:', item.name, 'New checked state:', event.target.checked);
+                      handleToggleActive(item);
+                    }}
+                    color="primary"
+                    inputProps={{ 'aria-label': `Toggle ${item.name} active status` }}
+                  />
                 </TableCell>
                 <TableCell align="right">
                   <IconButton color="primary" onClick={() => handleOpenDialog(item)}>
@@ -272,9 +652,9 @@ const MenuItemManagement: React.FC = () => {
             value={newItemImage}
             onChange={(e) => {
               setNewItemImage(e.target.value);
-              setSelectedFile(null); // Clear selected file if user types a URL
+              setSelectedFile(null);
             }}
-            sx={{ mt: 2 }} // Add some margin for spacing
+            sx={{ mt: 2 }}
           />
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
             OR upload an image file:
@@ -282,7 +662,7 @@ const MenuItemManagement: React.FC = () => {
           <Input
             type="file"
             fullWidth
-            sx={{ mb: 2 }} // Add some margin for spacing
+            sx={{ mb: 2 }}
             onChange={handleFileChange}
           />
           {newItemImage && (
@@ -304,12 +684,44 @@ const MenuItemManagement: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={newItemActive}
+                onChange={(e) => setNewItemActive(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Active on Menu"
+            sx={{ mt: 2 }}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSubmit}>{currentMenuItem ? 'Update' : 'Add'}</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Success/Error Notifications */}
+      <Snackbar
+        open={showSuccess}
+        autoHideDuration={3000}
+        onClose={() => setShowSuccess(false)}
+      >
+        <Alert severity="success" onClose={() => setShowSuccess(false)}>
+          Operation completed successfully
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={showError}
+        autoHideDuration={3000}
+        onClose={() => setShowError(false)}
+      >
+        <Alert severity="error" onClose={() => setShowError(false)}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

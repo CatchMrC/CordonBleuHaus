@@ -9,6 +9,12 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  category: Category;
   image?: string;
+  category: Category;
+  active: boolean;
+  featured: boolean;
+  seasonal: boolean;
+  specialOffer: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

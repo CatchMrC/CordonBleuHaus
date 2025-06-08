@@ -30,7 +30,7 @@ const App: React.FC = () => {
                   <Hero />
                   <div id="menu-section">
                     <Menu />
-                  </div>
+    </div>
                   <SpecialOffers />
                   <Testimonials />
                   <Gallery />

@@ -31,8 +31,9 @@ const Menu: React.FC = () => {
         
         // Extract unique categories from fetched menu items
         const uniqueCategoriesMap = new Map<string, Category>();
+        // Only add categories that have at least one active item
         data.forEach(item => {
-          if (item.category && !uniqueCategoriesMap.has(item.category._id)) {
+          if (item.active && item.category && !uniqueCategoriesMap.has(item.category._id)) {
             uniqueCategoriesMap.set(item.category._id, item.category);
           }
         });
@@ -40,7 +41,10 @@ const Menu: React.FC = () => {
         setMenuCategories(categoriesArray);
 
         if (categoriesArray.length > 0) {
-          setSelectedCategory(categoriesArray[0].name); // Set initial selected category by name
+          // Set initial selected category to the first active category if no category is selected
+          if (!selectedCategory) {
+            setSelectedCategory(categoriesArray[0].name);
+          }
         }
       } catch (error) {
         console.error('Error fetching menu data:', error);
@@ -48,9 +52,11 @@ const Menu: React.FC = () => {
     };
 
     fetchMenuData();
-  }, []);
+  }, [selectedCategory]); // Add selectedCategory to dependencies to re-fetch if it changes externally
 
-  const filteredItems = menuItems.filter(item => item.category?.name === selectedCategory); // Access category.name
+  const filteredItems = menuItems.filter(item => 
+    item.active && item.category?.name === selectedCategory
+  );
 
   const containerVariants = {
     hidden: { opacity: 0 },
