@@ -7,6 +7,7 @@ import categoryRoutes from './routes/categoryRoutes';
 import menuItemRoutes from './routes/menuItemRoutes';
 import authRoutes from './routes/authRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import specialOfferRoutes from './routes/specialOfferRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -41,4 +42,5 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/categories', categoryRoutes);
 app.use('/api/menu-items', menuItemRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/upload', uploadRoutes); 
+app.use('/api/upload', uploadRoutes);
+app.use('/api/special-offers', specialOfferRoutes); 

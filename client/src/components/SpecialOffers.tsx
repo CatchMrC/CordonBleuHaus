@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Box, 
@@ -11,42 +11,33 @@ import {
 } from '@mui/material';
 
 interface Offer {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   image: string;
   validUntil: string;
   type: 'promotion' | 'event';
+  active: boolean;
 }
 
-const offers: Offer[] = [
-  {
-    id: '1',
-    title: 'Weekend Brunch Special',
-    description: 'Enjoy our special weekend brunch menu with complimentary mimosa. Available every Saturday and Sunday from 10 AM to 2 PM.',
-    image: 'https://images.unsplash.com/photo-1504674900247-1a781979e8c0?auto=format&fit=crop&w=600&q=80',
-    validUntil: '2024-12-31',
-    type: 'promotion'
-  },
-  {
-    id: '2',
-    title: 'Wine Tasting Evening',
-    description: 'Join us for an exclusive wine tasting event featuring selected French wines paired with artisanal cheeses.',
-    image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=600&q=80',
-    validUntil: '2024-06-30',
-    type: 'event'
-  },
-  {
-    id: '3',
-    title: 'Early Bird Special',
-    description: '20% off on all main courses when dining between 5 PM and 6:30 PM, Monday through Thursday.',
-    image: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=600&q=80',
-    validUntil: '2024-12-31',
-    type: 'promotion'
-  }
-];
-
 const SpecialOffers: React.FC = () => {
+  const [offers, setOffers] = useState<Offer[]>([]);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/special-offers');
+        const data = await response.json();
+        // Only show active offers
+        setOffers(data.filter((offer: Offer) => offer.active));
+      } catch (error) {
+        console.error('Error fetching special offers:', error);
+      }
+    };
+
+    fetchOffers();
+  }, []);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -92,7 +83,7 @@ const SpecialOffers: React.FC = () => {
             gap: 4
           }}>
             {offers.map((offer) => (
-              <motion.div key={offer.id} variants={itemVariants}>
+              <motion.div key={offer._id} variants={itemVariants}>
                 <Card 
                   sx={{ 
                     height: '100%',

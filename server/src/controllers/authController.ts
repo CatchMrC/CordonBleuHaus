@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import jwt, { Secret, SignOptions } from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import User, { IUser } from '../models/User';
 
-const JWT_SECRET: Secret = process.env.JWT_SECRET || 'your_jwt_secret'; // Use a strong, random secret in production
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '1h';
+const JWT_SECRET: Secret = process.env.JWT_SECRET || 'your_super_secret_key'; // Use a strong, random secret in production
+const JWT_EXPIRES_IN = '1h'; // Token expiration time
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -51,7 +52,7 @@ export const loginUser = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN } as SignOptions
+      { expiresIn: JWT_EXPIRES_IN }
     );
     
     // Do not return password hash in response

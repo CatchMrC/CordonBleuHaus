@@ -32,7 +32,8 @@ import {
   FormControlLabel,
   Switch,
   Collapse,
-  Divider
+  Divider,
+  Checkbox
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -84,6 +85,8 @@ const MenuItemManagement: React.FC = () => {
     { label: '$20-$30', value: '20to30', range: [20, 30] },
     { label: 'Over $30', value: 'over30', range: [30, 100] }
   ];
+
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const fetchMenuItems = async () => {
     try {
@@ -356,6 +359,123 @@ const MenuItemManagement: React.FC = () => {
     }
   };
 
+  // Handle select all checkbox
+  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const newSelecteds = filteredMenuItems.map((item) => item._id);
+      setSelectedItems(newSelecteds);
+      return;
+    }
+    setSelectedItems([]);
+  };
+
+  // Handle individual item checkbox click
+  const handleCheckboxClick = (event: React.MouseEvent<unknown>, id: string) => {
+    const selectedIndex = selectedItems.indexOf(id);
+    let newSelected: string[] = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selectedItems, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selectedItems.slice(1));
+    } else if (selectedIndex === selectedItems.length - 1) {
+      newSelected = newSelected.concat(selectedItems.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selectedItems.slice(0, selectedIndex),
+        selectedItems.slice(selectedIndex + 1),
+      );
+    }
+    setSelectedItems(newSelected);
+  };
+
+  // Check if an item is selected
+  const isSelected = (id: string) => selectedItems.indexOf(id) !== -1;
+
+  // New handler for bulk setting active status
+  const handleBulkSetActivationStatus = async (shouldActivate: boolean) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setErrorMessage('No token found. Please log in.');
+      setShowError(true);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/menu-items/bulk-update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          itemIds: selectedItems,
+          updates: { active: shouldActivate }
+        }),
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        console.log(`Bulk ${shouldActivate ? 'activation' : 'deactivation'} successful. Response:`, responseData);
+        setSelectedItems([]); // Clear selection after bulk action
+        fetchMenuItems();
+        setShowSuccess(true);
+      } else {
+        console.error(`Bulk ${shouldActivate ? 'activation' : 'deactivation'} failed. Status:`, response.status, 'Response:', responseData);
+        setErrorMessage(`Failed to bulk ${shouldActivate ? 'activate' : 'deactivate'} items: ` + (responseData.message || 'Unknown error'));
+        setShowError(true);
+      }
+    } catch (error) {
+      console.error(`Error during bulk ${shouldActivate ? 'activation' : 'deactivation'} API call:`, error);
+      setErrorMessage(`Error during bulk ${shouldActivate ? 'activation' : 'deactivation'}.`);
+      setShowError(true);
+    }
+  };
+
+  // New handler for bulk delete
+  const handleBulkDelete = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setErrorMessage('No token found. Please log in.');
+      setShowError(true);
+      return;
+    }
+
+    // Confirm before deleting
+    if (!window.confirm(`Are you sure you want to delete ${selectedItems.length} selected items?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/menu-items/bulk-delete', {
+        method: 'POST', // Using POST for bulk delete to send body
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ itemIds: selectedItems }),
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        console.log('Bulk delete successful. Response:', responseData);
+        setSelectedItems([]); // Clear selection after bulk action
+        fetchMenuItems();
+        setShowSuccess(true);
+      } else {
+        console.error('Bulk delete failed. Status:', response.status, 'Response:', responseData);
+        setErrorMessage('Failed to bulk delete items: ' + (responseData.message || 'Unknown error'));
+        setShowError(true);
+      }
+    } catch (error) {
+      console.error('Error during bulk delete API call:', error);
+      setErrorMessage('Error during bulk delete.');
+      setShowError(true);
+    }
+  };
+
   return (
     <Box sx={{ mt: 4 }}>
       <Typography variant="h5" gutterBottom>Manage Menu Items</Typography>
@@ -560,14 +680,50 @@ const MenuItemManagement: React.FC = () => {
         </Box>
       </Collapse>
 
-      <Button variant="contained" color="primary" onClick={() => handleOpenDialog()} sx={{ mb: 2 }}>
-        Add New Menu Item
-      </Button>
+      {/* Add New Menu Item Button and Bulk Actions */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
+          Add New Menu Item
+        </Button>
+        {selectedItems.length > 0 && (
+          <Stack direction="row" spacing={1}>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              onClick={() => handleBulkSetActivationStatus(true)} // Activate Selected
+            >
+              Activate Selected ({selectedItems.length})
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="warning" // Use warning color for deactivation
+              onClick={() => handleBulkSetActivationStatus(false)} // Deactivate Selected
+            >
+              Deactivate Selected ({selectedItems.length})
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="error" 
+              onClick={handleBulkDelete}
+            >
+              Delete Selected ({selectedItems.length})
+            </Button>
+          </Stack>
+        )}
+      </Box>
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  indeterminate={selectedItems.length > 0 && selectedItems.length < filteredMenuItems.length}
+                  checked={filteredMenuItems.length > 0 && selectedItems.length === filteredMenuItems.length}
+                  onChange={handleSelectAllClick}
+                  inputProps={{ 'aria-label': 'select all menu items' }}
+                />
+              </TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Price</TableCell>
@@ -578,36 +734,55 @@ const MenuItemManagement: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredMenuItems.map((item) => (
-              <TableRow key={item._id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.category?.name}</TableCell>
-                <TableCell>${item.price.toFixed(2)}</TableCell>
-                <TableCell>{item.description}</TableCell>
-                <TableCell>
-                  {item.image && <img src={item.image} alt={item.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />}
-                </TableCell>
-                <TableCell>
-                  <Switch
-                    checked={item.active}
-                    onChange={(event) => {
-                      console.log('Switch changed for item:', item.name, 'New checked state:', event.target.checked);
-                      handleToggleActive(item);
-                    }}
-                    color="primary"
-                    inputProps={{ 'aria-label': `Toggle ${item.name} active status` }}
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton color="primary" onClick={() => handleOpenDialog(item)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton color="secondary" onClick={() => handleDelete(item._id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {filteredMenuItems.map((item) => {
+              const isItemSelected = isSelected(item._id);
+              return (
+                <TableRow
+                  hover
+                  onClick={(event) => handleCheckboxClick(event, item._id)}
+                  role="checkbox"
+                  aria-checked={isItemSelected}
+                  tabIndex={-1}
+                  key={item._id}
+                  selected={isItemSelected}
+                >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={isItemSelected}
+                      inputProps={{ 'aria-labelledby': `menu-item-checkbox-${item._id}` }}
+                    />
+                  </TableCell>
+                  <TableCell component="th" id={`menu-item-checkbox-${item._id}`} scope="row">
+                    {item.name}
+                  </TableCell>
+                  <TableCell>{item.category?.name}</TableCell>
+                  <TableCell>${item.price.toFixed(2)}</TableCell>
+                  <TableCell>{item.description}</TableCell>
+                  <TableCell>
+                    {item.image && <img src={item.image} alt={item.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />}
+                  </TableCell>
+                  <TableCell>
+                    <Switch
+                      checked={item.active}
+                      onChange={(event) => {
+                        console.log('Switch changed for item:', item.name, 'New checked state:', event.target.checked);
+                        handleToggleActive(item);
+                      }}
+                      color="primary"
+                      inputProps={{ 'aria-label': `Toggle ${item.name} active status` }}
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton color="primary" onClick={() => handleOpenDialog(item)}>
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton color="secondary" onClick={() => handleDelete(item._id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -702,7 +877,6 @@ const MenuItemManagement: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Success/Error Notifications */}
       <Snackbar
         open={showSuccess}
         autoHideDuration={3000}

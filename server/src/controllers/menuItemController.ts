@@ -95,4 +95,45 @@ export const deleteMenuItem = async (req: Request, res: Response) => {
     console.error('Error deleting menu item:', err);
     res.status(400).json({ error: 'Failed to delete menu item' });
   }
+};
+
+export const bulkUpdateMenuItems = async (req: Request, res: Response) => {
+  console.log('bulkUpdateMenuItems: Received bulk update request.');
+  console.log('bulkUpdateMenuItems: Request body:', req.body);
+  try {
+    const { itemIds, updates } = req.body;
+    if (!Array.isArray(itemIds) || itemIds.length === 0 || !updates) {
+      return res.status(400).json({ error: 'Invalid request body: itemIds and updates are required.' });
+    }
+
+    const result = await MenuItem.updateMany(
+      { _id: { $in: itemIds } },
+      { $set: updates }
+    );
+    console.log('bulkUpdateMenuItems: Successfully updated', result.modifiedCount, 'items.');
+    res.json({ message: `Successfully updated ${result.modifiedCount} items.`, modifiedCount: result.modifiedCount });
+  } catch (err) {
+    console.error('bulkUpdateMenuItems: Error during bulk update:', err);
+    res.status(400).json({ error: 'Failed to bulk update menu items' });
+  }
+};
+
+export const bulkDeleteMenuItems = async (req: Request, res: Response) => {
+  console.log('bulkDeleteMenuItems: Received bulk delete request.');
+  console.log('bulkDeleteMenuItems: Request body:', req.body);
+  try {
+    const { itemIds } = req.body;
+    if (!Array.isArray(itemIds) || itemIds.length === 0) {
+      return res.status(400).json({ error: 'Invalid request body: itemIds array is required.' });
+    }
+
+    const result = await MenuItem.deleteMany(
+      { _id: { $in: itemIds } }
+    );
+    console.log('bulkDeleteMenuItems: Successfully deleted', result.deletedCount, 'items.');
+    res.json({ message: `Successfully deleted ${result.deletedCount} items.`, deletedCount: result.deletedCount });
+  } catch (err) {
+    console.error('bulkDeleteMenuItems: Error during bulk delete:', err);
+    res.status(400).json({ error: 'Failed to bulk delete menu items' });
+  }
 }; 

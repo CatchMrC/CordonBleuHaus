@@ -1,20 +1,61 @@
-import React from 'react';
-import { Box, Typography, Container } from '@mui/material';
-import CategoryManagement from '../components/admin/CategoryManagement';
+import React, { useState } from 'react';
+import { Box, Tabs, Tab } from '@mui/material';
 import MenuItemManagement from '../components/admin/MenuItemManagement';
+import SpecialOfferManagement from '../components/admin/SpecialOfferManagement';
+import CategoryManagement from '../components/admin/CategoryManagement';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`admin-tabpanel-${index}`}
+      aria-labelledby={`admin-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 const AdminDashboard: React.FC = () => {
+  const [value, setValue] = useState(0);
+
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+  };
+
   return (
-    <Container sx={{ mt: 10, mb: 5 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        Admin Dashboard
-      </Typography>
-      <Box sx={{ mt: 4 }}>
-        <MenuItemManagement />
-        
-        <CategoryManagement />
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={value} onChange={handleChange} aria-label="admin tabs">
+          <Tab label="Menu Items" />
+          <Tab label="Special Offers & Events" />
+          <Tab label="Categories" />
+        </Tabs>
       </Box>
-    </Container>
+      <TabPanel value={value} index={0}>
+        <MenuItemManagement />
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        <SpecialOfferManagement />
+      </TabPanel>
+      <TabPanel value={value} index={2}>
+        <CategoryManagement />
+      </TabPanel>
+    </Box>
   );
 };
 

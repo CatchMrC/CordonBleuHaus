@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-const JWT_SECRET: Secret = process.env.JWT_SECRET || 'your_jwt_secret'; // Should be same as in authController
+const JWT_SECRET: Secret = process.env.JWT_SECRET || 'your_super_secret_key'; // Should be same as in authController
 
 export const protect = (req: Request, res: Response, next: NextFunction) => {
   // Get token from header
