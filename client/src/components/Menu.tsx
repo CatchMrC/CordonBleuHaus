@@ -10,7 +10,12 @@ import {
   Tab, 
   Chip,
   Badge,
-  Container
+  Container,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
 import { MenuItem, Category } from '../data/menuData';
@@ -21,6 +26,8 @@ const Menu: React.FC = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [menuCategories, setMenuCategories] = useState<Category[]>([]); // Store Category objects
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [openDialog, setOpenDialog] = useState(false); // New state for dialog visibility
+  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null); // New state for selected item
 
   useEffect(() => {
     const fetchMenuData = async () => {
@@ -77,9 +84,26 @@ const Menu: React.FC = () => {
     }
   };
 
+  const handleOpenDialog = (item: MenuItem) => {
+    setSelectedMenuItem(item);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedMenuItem(null);
+  };
+
   return (
-    <Box sx={{ py: 10, bgcolor: 'background.default', borderRadius: 4, px: { xs: 1, md: 0 }, mb: 8 }}>
-      <Container maxWidth="md">
+    <Box 
+      sx={{
+        py: 10, 
+        bgcolor: 'background.default', 
+        borderRadius: 4, 
+        mb: 8,
+      }}
+    >
+      <Container maxWidth="xl">
         <Typography variant="h3" gutterBottom component={motion.div}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -95,7 +119,16 @@ const Menu: React.FC = () => {
           onChange={(_, newValue) => setSelectedCategory(newValue as string)}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ mb: 5, maxWidth: 700, mx: 'auto', borderRadius: 2, bgcolor: 'background.paper', boxShadow: 2 }}
+          sx={{ 
+            mb: 5, 
+            borderRadius: 2, 
+            bgcolor: 'background.paper', 
+            boxShadow: 2,
+            width: '100%',
+            '& .MuiTabs-flexContainer': {
+              justifyContent: 'center',
+            }
+          }}
         >
           {menuCategories.map((category) => (
             <Tab
@@ -118,12 +151,14 @@ const Menu: React.FC = () => {
             display: 'grid',
             gridTemplateColumns: {
               xs: '1fr',
-              md: '1fr 1fr'
+              sm: '1fr 1fr',
+              md: '1fr 1fr',
+              lg: '1fr 1fr 1fr 1fr'
             },
             gap: 5,
-            maxWidth: 900,
-            mx: 'auto',
-            mt: 2
+            width: '100%',
+            mt: 2,
+            justifyContent: 'center'
           }}>
             {filteredItems.map((item) => (
               <motion.div key={item._id} variants={itemVariants}>
@@ -136,7 +171,7 @@ const Menu: React.FC = () => {
                 >
                   <Card 
                     sx={{
-                      height: '100%',
+                      height: { xs: 'auto', sm: 250 },
                       display: 'flex',
                       flexDirection: { xs: 'column', sm: 'row' },
                       borderRadius: 4,
@@ -144,47 +179,74 @@ const Menu: React.FC = () => {
                       transition: 'transform 0.2s, box-shadow 0.2s',
                       '&:hover': {
                         transform: 'scale(1.03)',
-                        boxShadow: 12
+                        boxShadow: 12,
+                        cursor: 'pointer' // Indicate interactivity
                       },
                       bgcolor: 'background.paper',
-                      minHeight: 220
                     }}
+                    onClick={() => handleOpenDialog(item)} // Add onClick to open dialog
                   >
                     <CardMedia
                       component="img"
                       image={item.image}
                       alt={item.name}
                       sx={{
-                        width: { xs: '100%', sm: 180 },
-                        height: { xs: 180, sm: '100%' },
+                        width: { xs: '100%', sm: 200 },
+                        height: { xs: 200, sm: '100%' },
                         objectFit: 'cover',
                         borderTopLeftRadius: 16,
                         borderBottomLeftRadius: { sm: 16, xs: 0 },
                         borderTopRightRadius: { xs: 16, sm: 0 }
                       }}
                     />
-                    <CardContent sx={{ flex: 1 }}>
-                      <Typography gutterBottom variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                        {item.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {item.description}
-                      </Typography>
-                      <Chip 
-                        label={`$${item.price.toFixed(2)}`}
-                        color="primary"
-                        size="medium"
-                        sx={{ fontSize: '1.1rem', fontWeight: 'bold', px: 2, py: 1, mb: 1 }}
-                      />
-                      {chefSpecialIds.includes(item._id) && (
-                        <Chip
-                          icon={<StarIcon />}
-                          label="Chef's Special"
-                          color="secondary"
-                          size="small"
-                          sx={{ ml: 1, fontWeight: 'bold' }}
+                    <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <Box>
+                        <Typography 
+                          gutterBottom 
+                          variant="h6" 
+                          component="div" 
+                          sx={{
+                            fontWeight: 'bold',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {item.name}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            mb: 2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {item.description}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Chip 
+                          label={`$${item.price.toFixed(2)}`}
+                          color="primary"
+                          sx={{ fontSize: '1.2rem', fontWeight: 'bold', px: 3, py: 1.5, mb: 1 }}
                         />
-                      )}
+                        {chefSpecialIds.includes(item._id) && (
+                          <Chip
+                            icon={<StarIcon />}
+                            label="Chef's Special"
+                            color="secondary"
+                            size="small"
+                            sx={{ ml: 1, fontWeight: 'bold' }}
+                          />
+                        )}
+                      </Box>
                     </CardContent>
                   </Card>
                 </Badge>
@@ -193,6 +255,50 @@ const Menu: React.FC = () => {
           </Box>
         </motion.div>
       </Container>
+
+      {/* Menu Item Detail Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+        <DialogTitle>{selectedMenuItem?.name}</DialogTitle>
+        <DialogContent dividers>
+          {selectedMenuItem && (
+            <Box>
+              <CardMedia
+                component="img"
+                image={selectedMenuItem.image}
+                alt={selectedMenuItem.name}
+                sx={{ width: '100%', maxHeight: 300, objectFit: 'cover', mb: 2, borderRadius: 2 }}
+              />
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                {selectedMenuItem.name}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                {selectedMenuItem.description}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Chip 
+                  label={`$${selectedMenuItem.price.toFixed(2)}`}
+                  color="primary"
+                  sx={{ fontSize: '1.3rem', fontWeight: 'bold', px: 3, py: 1.5 }}
+                />
+                {chefSpecialIds.includes(selectedMenuItem._id) && (
+                  <Chip
+                    icon={<StarIcon />}
+                    label="Chef's Special"
+                    color="secondary"
+                    size="small"
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                )}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

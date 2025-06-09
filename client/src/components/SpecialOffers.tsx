@@ -7,8 +7,14 @@ import {
   CardContent, 
   CardMedia,
   Chip,
-  Container
+  Container,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
+import { format } from 'date-fns';
 
 interface Offer {
   _id: string;
@@ -22,6 +28,8 @@ interface Offer {
 
 const SpecialOffers: React.FC = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -54,6 +62,16 @@ const SpecialOffers: React.FC = () => {
       opacity: 1,
       y: 0
     }
+  };
+
+  const handleOpenDialog = (offer: Offer) => {
+    setSelectedOffer(offer);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedOffer(null);
   };
 
   return (
@@ -91,9 +109,11 @@ const SpecialOffers: React.FC = () => {
                     flexDirection: 'column',
                     transition: 'transform 0.2s',
                     '&:hover': {
-                      transform: 'translateY(-8px)'
+                      transform: 'translateY(-8px)',
+                      cursor: 'pointer'
                     }
                   }}
+                  onClick={() => handleOpenDialog(offer)}
                 >
                   <CardMedia
                     component="img"
@@ -109,14 +129,36 @@ const SpecialOffers: React.FC = () => {
                         size="small"
                       />
                     </Box>
-                    <Typography variant="h5" component="h3" gutterBottom>
+                    <Typography 
+                      variant="h5" 
+                      component="h3" 
+                      gutterBottom
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
                       {offer.title}
                     </Typography>
-                    <Typography variant="body1" color="text.secondary" paragraph>
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary" 
+                      paragraph
+                      sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
                       {offer.description}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Valid until: {new Date(offer.validUntil).toLocaleDateString()}
+                      Valid until: {format(new Date(offer.validUntil), 'PPP')}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -125,6 +167,44 @@ const SpecialOffers: React.FC = () => {
           </Box>
         </motion.div>
       </Container>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+        <DialogTitle>{selectedOffer?.title}</DialogTitle>
+        <DialogContent dividers>
+          {selectedOffer && (
+            <Box>
+              <CardMedia
+                component="img"
+                image={selectedOffer.image}
+                alt={selectedOffer.title}
+                sx={{ width: '100%', maxHeight: 300, objectFit: 'cover', mb: 2, borderRadius: 2 }}
+              />
+              <Box sx={{ mb: 2 }}>
+                <Chip 
+                  label={selectedOffer.type === 'promotion' ? 'Special Offer' : 'Event'}
+                  color={selectedOffer.type === 'promotion' ? 'primary' : 'secondary'}
+                  size="medium"
+                  sx={{ fontSize: '1.1rem', px: 2, py: 1 }}
+                />
+              </Box>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                {selectedOffer.title}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                {selectedOffer.description}
+              </Typography>
+              <Typography variant="subtitle2" color="text.primary" sx={{ fontWeight: 'bold' }}>
+                Valid until: {format(new Date(selectedOffer.validUntil), 'PPP')}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
