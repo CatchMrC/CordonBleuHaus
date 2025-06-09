@@ -83,7 +83,7 @@ const Hero: React.FC = () => {
             <Button 
               variant="contained" 
               size="large"
-              onClick={() => scrollToSection('special-offers')}
+              onClick={() => scrollToSection('menu-section')}
               sx={{ 
                 minWidth: '200px',
                 backgroundColor: 'primary.main',
@@ -97,7 +97,7 @@ const Hero: React.FC = () => {
             <Button 
               variant="outlined" 
               size="large"
-              onClick={() => scrollToSection('contact')}
+              onClick={() => scrollToSection('special-offers')}
               sx={{ 
                 minWidth: '200px',
                 color: 'white',
@@ -108,7 +108,7 @@ const Hero: React.FC = () => {
                 }
               }}
             >
-              Make Reservation
+              Special Offers
             </Button>
           </Box>
         </motion.div>

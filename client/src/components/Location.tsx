@@ -23,10 +23,10 @@ const Location: React.FC = () => (
         <LocationOnIcon sx={{ mr: 1, mt: 0.5 }} />
         <Box>
           <Typography variant="body1" gutterBottom>
-            123 Gourmet Street
+            Freiburger Str. 313
           </Typography>
           <Typography variant="body1" gutterBottom>
-            Food City, FC 12345
+            79539 Lörrach, Deutschland
           </Typography>
           <Link 
             href="https://maps.google.com" 
@@ -44,10 +44,13 @@ const Location: React.FC = () => (
         <AccessTimeIcon sx={{ mr: 1, mt: 0.5 }} />
         <Box>
           <Typography variant="body1" gutterBottom>
-            Tuesday - Sunday: 11:00 AM - 10:00 PM
+            Monday - Friday: 11:00 - 22:00
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            Saturday: 11:00 - 23:00
           </Typography>
           <Typography variant="body1">
-            Monday: Closed
+            Sunday: 12:00 - 21:00
           </Typography>
         </Box>
       </Box>
@@ -65,7 +68,7 @@ const Location: React.FC = () => (
     >
       <iframe
         title="Restaurant Location"
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387193.30591910525!2d-74.25986432970718!3d40.697149422113014!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY%2C%20USA!5e0!3m2!1sen!2s!4v1647043087964!5m2!1sen!2s"
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2686.7!2d7.6647!3d47.6157!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4791b85d9e0a0f13%3A0x1!2sFreiburger%20Str.%20313%2C%2079539%20L%C3%B6rrach%2C%20Deutschland!5e0!3m2!1sen!2s!4v1647043087964!5m2!1sen!2s"
         width="100%"
         height="100%"
         style={{ border: 0 }}
