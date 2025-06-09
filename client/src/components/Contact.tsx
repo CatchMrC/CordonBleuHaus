@@ -267,7 +267,7 @@ const Contact: React.FC = () => {
                   {/* Backup: Keep the LoadScript for future use if API gets fixed */}
                   {false && (
                     <LoadScript 
-                      googleMapsApiKey="AIzaSyDHab86IW351LULmvhw8pOYXNvXghN6GEY"
+                      googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || ""}
                       onError={onMapError}
                     >
                       <GoogleMap
